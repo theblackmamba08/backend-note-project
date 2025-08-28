@@ -26,13 +26,8 @@ let notes = [
 ];
 
 app.get('/', (request, response) => {
-    response.send('<h1>Hello World!</h1>'); 
+    response.sendFile(path.resolve(__dirname, 'dist', 'index.html')); 
 });
-// Catch-all pour servir index.html sur toutes les routes non-API
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-});
-
 
 app.get('/api/notes', (request, response) => {
     response.json(notes);
