@@ -68,8 +68,28 @@ app.post('/api/notes', express.json(), (request, response) => {
     response.status(201).json(note);
 });
 
+app.put('/api/notes/:id', express.json(), (request, response) => {
+    const id = Number(request.params.id);
+    const body = request.body;
+    const note = notes.find(note => note.id === id);
+    if (!note) {
+        return response.status(404).json({ 
+            error: 'note not found' 
+        });
+    }
+    const updatedNote = { ...note, ...body };
+    notes = notes.map(n => n.id !== id ? n : updatedNote);
+    response.json(updatedNote);
+});   
+
 app.delete('/api/notes/:id', (request, response) => {
     const id = Number(request.params.id);
+    const noteExists = notes.some(note => note.id === id);
+    if (!noteExists) {
+        return response.status(410).json({
+            message: "L'élément a déjà été supprimé du serveur."
+        });
+    }
     notes = notes.filter(note => note.id !== id);
     response.status(204).end();
 });
