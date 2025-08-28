@@ -1,0 +1,17 @@
+### Get all notes
+GET http://localhost:3001/api/notes
+
+### Get a single note by id
+GET http://localhost:3001/api/notes/1
+
+### Create a new note
+POST http://localhost:3001/api/notes
+Content-Type: application/json
+
+{
+  "content": "Nouvelle note via .rest",
+  "important": true
+}
+
+### Delete a note by id
+DELETE http://localhost:3001/api/notes/4
