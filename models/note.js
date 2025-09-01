@@ -4,8 +4,6 @@ mongoose.set('strictQuery', false);
 
 const url = process.env.MONGODB_URI;
 
-// const url = `mongodb+srv://theblackmamba08:${password}@cluster0.g0rdjei.mongodb.net/noteApp?retryWrites=true&w=majority&appName=Cluster0`;
-
 console.log('connecting to', url)
 mongoose.connect(url)
     .then((result) => {

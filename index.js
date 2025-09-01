@@ -51,7 +51,11 @@ app.put('/api/notes/:id', (req, res, next) => {
   const { content, important } = req.body
   Note.findById(req.params.id)
     .then(note => {
-      if (!note) return res.status(404).end()
+      if (!note) {
+        return res.status(410).json({
+          message: "La note a déjà été supprimée du serveur."
+        });
+      }
       note.content = content
       note.important = important
       return note.save().then(updatedNote => res.json(updatedNote))
@@ -61,8 +65,16 @@ app.put('/api/notes/:id', (req, res, next) => {
 
 // DELETE note
 app.delete('/api/notes/:id', (req, res, next) => {
-  Note.findByIdAndDelete(req.params.id)
-    .then(() => res.status(204).end())
+  Note.findById(req.params.id)
+    .then(note => {
+      if (!note) {
+        return res.status(410).json({
+          message: "La note a déjà été supprimée du serveur."
+        });
+      }
+      return Note.findByIdAndDelete(req.params.id)
+        .then(() => res.status(204).end());
+    })
     .catch(error => next(error))
 })
 
