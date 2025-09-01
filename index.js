@@ -1,100 +1,89 @@
 const express = require('express')
-const path = require('path');
-const app = express()
+const path = require('path')
+require('dotenv').config()
+const Note = require('./models/note')
 
+
+
+const app = express()
+app.use(express.json())
 app.use(express.static('dist'))
 
-let notes = [
-	{
-		id: 1,
-		content: "HTML is easy",
-		date: "2022-05-30T17:30:31.098Z",
-		important: true
-	},
-	{
-		id: 2,
-		content: "Browser can execute only Javascript",
-		date: "2022-05-30T18:39:34.091Z",
-		important: false
-	},
-	{
-		id: 3,
-		content: "GET and POST are the most important methods of HTTP protocol",
-		date: "2022-05-30T19:20:14.298Z",
-		important: true
-	}
-];
+// --- 2. Logger les requêtes ---
+const requestLogger = (req, res, next) => {
+  console.log(`${req.method} ${req.url}`)
+  next()
+}
+app.use(requestLogger)
 
 app.get('/', (request, response) => {
     response.sendFile(path.resolve(__dirname, 'dist', 'index.html')); 
 });
 
-app.get('/api/notes', (request, response) => {
-    response.json(notes);
+// --- 4. Routes ---
+
+// GET toutes les notes
+app.get('/api/notes', (req, res) => {
+  Note.find({}).then(notes => res.json(notes))
+})
+
+// GET note par ID
+app.get('/api/notes/:id', (req, res, next) => {
+  Note.findById(req.params.id)
+    .then(note => {
+      if (note) res.json(note)
+      else res.status(404).end()
+    })
+    .catch(error => next(error))
+})
+
+// POST nouvelle note
+app.post('/api/notes', (req, res, next) => {
+  const { content, important } = req.body
+  const note = new Note({ content, important })
+  note.save()
+    .then(savedNote => res.json(savedNote))
+    .catch(error => next(error))
+})
+
+// PUT mise à jour note
+app.put('/api/notes/:id', (req, res, next) => {
+  const { content, important } = req.body
+  Note.findById(req.params.id)
+    .then(note => {
+      if (!note) return res.status(404).end()
+      note.content = content
+      note.important = important
+      return note.save().then(updatedNote => res.json(updatedNote))
+    })
+    .catch(error => next(error))
+}) 
+
+// DELETE note
+app.delete('/api/notes/:id', (req, res, next) => {
+  Note.findByIdAndDelete(req.params.id)
+    .then(() => res.status(204).end())
+    .catch(error => next(error))
+})
+
+// --- 5. Middleware pour routes inconnues ---
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' })
+}
+app.use(unknownEndpoint)
+
+// --- 6. Middleware global d’erreurs ---
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    return res.status(400).send({ error: 'malformatted id' })
+  }
+  res.status(500).end()
+}
+app.use(errorHandler)
+
+
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
-
-app.get('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const note = notes.find(note => note.id === id);
-    if (note) {
-        response.json(note);
-    } else {
-        response.status(404).end();
-    }
-});
-
-const generateId = () => {
-    const maxId = notes.length > 0 ? Math.max(...notes.map(n => n.id)) : 0;
-    return maxId + 1;
-};
-app.post('/api/notes', express.json(), (request, response) => {
-    const body = request.body;
-
-    if (!body.content) {
-        return response.status(400).json({ 
-            error: 'content missing' 
-        });
-    }
-
-    const note = {
-        content: body.content,
-        important: body.important || false,
-        date: new Date().toISOString(),
-        id: generateId(),
-    };
-
-    notes = notes.concat(note);
-
-    response.status(201).json(note);
-});
-
-app.put('/api/notes/:id', express.json(), (request, response) => {
-    const id = Number(request.params.id);
-    const body = request.body;
-    const note = notes.find(note => note.id === id);
-    if (!note) {
-        return response.status(404).json({ 
-            error: 'note not found' 
-        });
-    }
-    const updatedNote = { ...note, ...body };
-    notes = notes.map(n => n.id !== id ? n : updatedNote);
-    response.json(updatedNote);
-});   
-
-app.delete('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const noteExists = notes.some(note => note.id === id);
-    if (!noteExists) {
-        return response.status(410).json({
-            message: "L'élément a déjà été supprimé du serveur."
-        });
-    }
-    notes = notes.filter(note => note.id !== id);
-    response.status(204).end();
-});
-
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT);
-console.log(`Server running on port ${PORT}`);
