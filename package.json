@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development node --watch index.js",
+    "test": "cross-env NODE_ENV=test node --test",
+    "lint": "eslint .",
+    "test:only":"cross-env NODE_ENV=test node --test --test-only",
     "build:ui": "rm -rf dist && cd ../note-project && npm run build && cp -r dist ../backend-note-project/dist",
     "deploy:full": "npm run build:ui && git add . && git commit -m 'Deploying full app' && git push"
   },
@@ -18,6 +20,12 @@
     "mongoose": "^8.18.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@eslint/js": "^9.34.0",
+    "@stylistic/eslint-plugin": "^5.3.1",
+    "cross-env": "^10.0.0",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   }
 }
